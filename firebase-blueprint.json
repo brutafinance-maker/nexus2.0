@@ -1,0 +1,93 @@
+{
+  "entities": {
+    "users": {
+      "title": "User Profile",
+      "description": "Stores user profile information and preferences.",
+      "type": "object",
+      "properties": {
+        "accessGranted": { "type": "boolean" },
+        "adm": { "type": "boolean" },
+        "birthday": { "type": "string" },
+        "ciclo": { "type": "string" },
+        "createdAt": { "type": "object" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "institution": { "type": "string" },
+        "invitesAvailable": { "type": "number" },
+        "isBanned": { "type": "boolean" },
+        "isPremium": { "type": "boolean" },
+        "lastActiveDate": { "type": "object" },
+        "medCourse": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "plan": { "type": "string" },
+        "points": { "type": "number" },
+        "questionsToday": { "type": "number" },
+        "role": { "type": "string" },
+        "semester": { "type": "string" },
+        "setupComplete": { "type": "boolean" },
+        "streak": { "type": "number" },
+        "studyTimeToday": { "type": "number" },
+        "themePreference": { "type": "string", "enum": ["light", "dark"] },
+        "totalAnswered": { "type": "number" },
+        "totalCorrect": { "type": "number" },
+        "totalErrors": { "type": "number" },
+        "weeklyPoints": { "type": "number" }
+      },
+      "required": ["email", "displayName", "role"]
+    },
+    "studySession": {
+      "title": "Study Session",
+      "description": "Individual study session log.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "duration": { "type": "number" },
+        "start": { "type": "object" },
+        "end": { "type": "object" }
+      }
+    },
+    "dailyStat": {
+      "title": "Daily Statistic",
+      "description": "Aggregated daily stats for a user.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "studyTime": { "type": "number" },
+        "questionsAnswered": { "type": "number" },
+        "correct": { "type": "number" },
+        "errors": { "type": "number" },
+        "pointsEarned": { "type": "number" }
+      }
+    },
+    "questionAttempt": {
+      "title": "Question Attempt",
+      "description": "Log of a single question attempt.",
+      "type": "object",
+      "properties": {
+        "questionId": { "type": "string" },
+        "isCorrect": { "type": "boolean" },
+        "difficulty": { "type": "string" },
+        "answeredAt": { "type": "object" },
+        "timeSpent": { "type": "number" }
+      }
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "users",
+      "description": "User documents identified by their Auth UID."
+    },
+    "users/{userId}/studySessions/{sessionId}": {
+      "schema": "studySession",
+      "description": "Individual study sessions for a user."
+    },
+    "users/{userId}/dailyStats/{date}": {
+      "schema": "dailyStat",
+      "description": "Daily aggregated stats for a user."
+    },
+    "users/{userId}/questionAttempts/{attemptId}": {
+      "schema": "questionAttempt",
+      "description": "Individual question attempts for a user."
+    }
+  }
+}

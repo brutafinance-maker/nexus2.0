@@ -1,0 +1,106 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (Auth UID)
+    // Fields:
+    //   - accessGranted: bool (required)
+    //   - adm: bool (required)
+    //   - birthday: string (optional)
+    //   - ciclo: string (optional)
+    //   - createdAt: timestamp (required)
+    //   - displayName: string (required)
+    //   - email: string (required)
+    //   - institution: string (optional)
+    //   - invitesAvailable: number (required)
+    //   - isBanned: bool (required)
+    //   - isPremium: bool (required)
+    //   - lastActiveDate: timestamp (required)
+    //   - medCourse: string (optional)
+    //   - photoURL: string (optional)
+    //   - plan: string (required)
+    //   - points: number (required)
+    //   - questionsToday: number (required)
+    //   - role: string (required)
+    //   - semester: string (optional)
+    //   - setupComplete: bool (required)
+    //   - streak: number (required)
+    //   - themePreference: string (required, 'light' | 'dark')
+    //   - totalAnswered: number (required)
+    //   - totalCorrect: number (required)
+    //   - totalErrors: number (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "matheusenge2@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'displayName', 'role', 'plan', 'isPremium']) &&
+             data.email is string &&
+             data.displayName is string && data.displayName.size() < 100 &&
+             data.role in ['user', 'admin'] &&
+             data.plan in ['free', 'premium'] &&
+             data.isPremium is bool &&
+             data.themePreference in ['light', 'dark'] &&
+             data.weeklyPoints is number;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      // Users can only read their own data to protect PII
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Users can create their own profile during signup
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && 
+                      request.resource.data.role == 'user' && 
+                      request.resource.data.adm == false;
+      
+      // Users can update their own profile, but cannot change their role or admin status
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) &&
+                      request.resource.data.role == resource.data.role &&
+                      request.resource.data.adm == resource.data.adm;
+                      
+      // Admins can do anything
+      allow write: if isAdmin();
+
+      match /studySessions/{sessionId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+      }
+
+      match /dailyStats/{date} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create, update: if isOwner(userId);
+      }
+
+      match /questionAttempts/{attemptId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+      }
+    }
+  }
+}
